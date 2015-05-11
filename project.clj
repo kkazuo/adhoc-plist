@@ -1,4 +1,4 @@
-(defproject adhoc-plist "1.0.0"
+(defproject adhoc-plist "1.0.1"
   :description "Generate .plist file with AdHoc .ipa package for OTA."
   :url "https://github.com/kkazuo/adhoc-plist"
   :license {:name "Eclipse Public License"
