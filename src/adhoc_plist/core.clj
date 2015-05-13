@@ -1,6 +1,6 @@
 (ns adhoc-plist.core
   (:require [clojure.java.io :as io]
-            [clojure.string :refer [join replace-first]])
+            [clojure.string :refer [replace-first]])
   (:import (com.dd.plist NSDictionary PropertyListParser)
            (java.util.zip ZipEntry ZipFile)))
 
@@ -66,12 +66,12 @@
               (get % "CFBundleIdentifier")
               (get % "CFBundleShortVersionString") ;"CFBundleVersion"
               (get % "CFBundleDisplayName")
-              (join [base-url name])
-              (join [base-url name' "-icon.png"])
-              (join [base-url name' "-artwork.png"])))
+              (str base-url name)
+              (str base-url name' "-icon.png")
+              (str base-url name' "-artwork.png")))
            (spit dest))
-      (join ["itms-services://?action=download-manifest&url="
-             base-url name' ".plist"]))))
+      (str "itms-services://?action=download-manifest&url="
+           base-url name' ".plist"))))
 
 #_(defn -main
   [source base-url]
