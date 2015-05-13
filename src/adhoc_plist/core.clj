@@ -1,8 +1,8 @@
 (ns adhoc-plist.core
   (:require [clojure.java.io :as io]
             [clojure.string :refer [join replace-first]])
-  (:import [java.util.zip ZipFile ZipEntry]
-           [com.dd.plist PropertyListParser NSDictionary]))
+  (:import (com.dd.plist NSDictionary PropertyListParser)
+           (java.util.zip ZipEntry ZipFile)))
 
 (def ^:private plist-template
   "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
