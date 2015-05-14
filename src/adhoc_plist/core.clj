@@ -1,7 +1,8 @@
 (ns adhoc-plist.core
   (:require [clojure.java.io :as io]
             [clojure.string :refer [replace-first]])
-  (:import (com.dd.plist NSDictionary PropertyListParser)
+  (:import (com.dd.plist NSArray NSDictionary NSNumber NSString
+                         PropertyListParser)
            (java.util.zip ZipEntry ZipFile)))
 
 (def ^:private plist-template
@@ -52,6 +53,33 @@
                               (.getName ^ZipEntry %))
                  seq)))
 
+(defmulti nsobject->object class)
+
+(defmethod nsobject->object NSNumber [^NSNumber obj]
+  (cond (.isBoolean obj) (.boolValue obj)
+        (.isInteger obj) (.longValue obj)
+        :else (.doubleValue obj)))
+
+(defmethod nsobject->object NSString [^NSString obj]
+  (.getContent obj))
+
+(defmethod nsobject->object NSArray [^NSArray obj]
+  (map nsobject->object (.getArray obj)))
+
+(defmethod nsobject->object NSDictionary [^NSDictionary obj]
+  (into {}
+        (map (fn [e]
+               [(.getKey e) (nsobject->object (.getValue e))])
+             (.. obj getHashMap entrySet))))
+
+(defn read-info-plist
+  [^String source]
+  (nsobject->object
+   (with-open [z (ZipFile. source)]
+     (->> (iterator-seq (.entries z))
+          (#(with-open [f (.getInputStream z (info-plist-entry %))]
+              (PropertyListParser/parse f)))))))
+
 (defn write-plist
   "Generate .plist file with AdHoc .ipa package for OTA."
   [^String source base-url]
@@ -59,9 +87,7 @@
         name (.getName (io/file source))
         name' (replace-first name #"\.[^.]+$" "")]
     (with-open [z (ZipFile. source)]
-      (->> (iterator-seq (.entries z))
-           (#(with-open [f (.getInputStream z (info-plist-entry %))]
-               (.getHashMap ^NSDictionary (PropertyListParser/parse f))))
+      (->> (read-info-plist source)
            (#(plist
               (get % "CFBundleIdentifier")
               (get % "CFBundleShortVersionString") ;"CFBundleVersion"
