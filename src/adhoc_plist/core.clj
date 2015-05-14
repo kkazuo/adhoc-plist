@@ -68,7 +68,7 @@
 
 (defmethod nsobject->object NSDictionary [^NSDictionary obj]
   (into {}
-        (map (fn [e]
+        (map (fn [^"java.util.LinkedHashMap$Entry" e]
                [(.getKey e) (nsobject->object (.getValue e))])
              (.. obj getHashMap entrySet))))
 
