@@ -1,6 +1,7 @@
 (ns adhoc-plist.core
   (:require [clojure.java.io :as io]
-            [clojure.string :refer [replace-first]])
+            [clojure.string :refer [replace-first]]
+            [net.cgrand.enlive-html :as en :refer [deftemplate]])
   (:import (com.dd.plist NSArray NSDictionary NSNumber NSString
                          PropertyListParser)
            (java.util.zip ZipEntry ZipFile)))
@@ -16,25 +17,25 @@
         <key>metadata</key>
         <dict>
           <key>kind</key><string>software</string>
-          <key>bundle-identifier</key><string>%s</string>
-          <key>bundle-version</key><string>%s</string>
-          <key>title</key><string>%s</string>
+          <key>bundle-identifier</key><identifier/>
+          <key>bundle-version</key><version/>
+          <key>title</key><title/>
         </dict>
         <key>assets</key>
         <array>
           <dict>
             <key>kind</key><string>software-package</string>
-            <key>url</key><string>%s</string>
+            <key>url</key><package/>
           </dict>
           <dict>
             <key>kind</key><string>display-image</string>
-            <key>needs-shine</key><false/>
-            <key>url</key><string>%s</string>
+            <key>needs-shine</key><needs-shine/>
+            <key>url</key><icon/>
           </dict>
           <dict>
             <key>kind</key><string>full-size-image</string>
-            <key>needs-shine</key><false/>
-            <key>url</key><string>%s</string>
+            <key>needs-shine</key><needs-shine/>
+            <key>url</key><artwork/>
           </dict>
         </array>
       </dict>
@@ -43,9 +44,30 @@
 </plist>
 ")
 
-(defn- plist
-  [id ver name package-url icon-url artwork-url]
-  (format plist-template id ver name package-url icon-url artwork-url))
+(deftemplate plist {:parser en/xml-parser}
+  (java.io.StringReader. plist-template)
+  [id ver name needs-shine package-url icon-url artwork-url]
+  [:identifier] (en/do->
+                 (en/html-content "<string>" id "</string>")
+                 en/unwrap)
+  [:version] (en/do->
+              (en/html-content "<string>" ver "</string>")
+              en/unwrap)
+  [:title] (en/do->
+            (en/html-content "<string>" name "</string>")
+            en/unwrap)
+  [:package] (en/do->
+              (en/html-content "<string>" package-url "</string>")
+              en/unwrap)
+  [:icon] (en/do->
+           (en/html-content "<string>" icon-url "</string>")
+           en/unwrap)
+  [:artwork] (en/do->
+              (en/html-content "<string>" artwork-url "</string>")
+              en/unwrap)
+  [:needs-shine] (en/do->
+                  (en/html-content (if needs-shine "<true/>" "<false/>"))
+                  en/unwrap))
 
 (defn- info-plist-entry
   [seq]
@@ -92,9 +114,11 @@
               (get % "CFBundleIdentifier")
               (get % "CFBundleShortVersionString") ;"CFBundleVersion"
               (get % "CFBundleDisplayName")
+              (not (get % "UIPrerenderedIcon"))
               (str base-url name)
               (str base-url name' "-icon.png")
               (str base-url name' "-artwork.png")))
+           (apply str)
            (spit dest))
       (str "itms-services://?action=download-manifest&url="
            base-url name' ".plist"))))
