@@ -44,7 +44,7 @@
 </plist>
 ")
 
-(deftemplate plist {:parser en/xml-parser}
+(deftemplate ^:private plist {:parser en/xml-parser}
   (java.io.StringReader. plist-template)
   [id ver name needs-shine package-url icon-url artwork-url]
   [:identifier] (en/do->
@@ -75,7 +75,7 @@
                               (.getName ^ZipEntry %))
                  seq)))
 
-(defmulti nsobject->object class)
+(defmulti ^:private nsobject->object class)
 
 (defmethod nsobject->object NSNumber [^NSNumber obj]
   (cond (.isBoolean obj) (.boolValue obj)
