@@ -11,6 +11,12 @@ A Clojure library designed to create .plist with iOS .ipa package for OTA.
 (write-plist "source.ipa" "https://host/base/path/")
 ```
 
+Also you can read Info.plist from iOS .ipa package file.
+
+```
+(read-info-plist "source.ipa")
+```
+
 ## License
 
 Copyright © 2015 Kazuo Koga
